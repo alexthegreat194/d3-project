@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Pokemon</title>
+</head>
+<body class="flex flex-col items-center p-10">
+
+    <h1 class="text-5xl font-bold">Pokemon by Type</h1>
+
+    <svg id="bar-svg" width="800" height="600"></svg>
+    <svg id="svg" width="500" height="500"></svg>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script>
+        const getColor = (name) => {
+            switch (name) {
+                case "Fire": return "red"
+                case "Water": return "blue"
+                case "Grass": return "green"
+                case "Bug": return "lightgreen"
+                case "Psychic": return "purple"
+                case "Electric": return "yellow"
+                case "Rock": return "brown"
+                case "Ground": return "brown"
+                case "Ghost": return "gray"
+                case "Dragon": return "DarkGoldenRod"
+                case "Dark": return "black"
+                case "Poison": return "purple"
+                case "Fighting": return "darkred"
+                case "Steel": return "lightgray"
+                case "Ice": return "blue"
+                case "Fairy": return "pink"
+                case "Flying": return "blue"
+                case "Flying": return "blue"
+                default: return "gray"
+            }
+        }
+
+        d3.csv("pokemon.csv")
+            .then(data => {
+                console.log(data)
+                const typeObject = data
+                    .reduce((types, p) => {
+                        const t = p["Type 1"]
+                        if (types.hasOwnProperty(t)) {
+                            types[t] += 1
+                        } else {
+                            types[t] = 1
+                        }
+                        return types
+                    }, {})
+                console.log(typeObject)
+                
+                var typeData = []
+                Object.keys(typeObject).map(k => 
+                    typeData.push({
+                        type: k,
+                        amount: typeObject[k]
+                    })
+                )
+                <!-- typeData.sort((a, b) =>  b.amount - a.amount) -->
+                console.log(typeData)
+                
+                const margin = 50
+                const height = 500
+                const width = 800
+                
+                // x scale 
+                const xscale = d3.scaleBand()
+                    .domain(typeData.map(d => d.type))
+                    .range([margin, width + margin])
+                    .padding(0.05) // space between bars
+                                
+                // y scale 
+                const popExtent = d3.extent(typeData, d => d.amount)
+                console.log(popExtent)
+                const yscale = d3.scaleLinear()
+                    .domain(popExtent)
+                    .range([height, margin])
+
+                const barSvg = d3.select("#bar-svg")
+
+                barSvg
+                    .append('g')
+                    .attr('transform', `translate(${0}, ${height})`)
+                    .call(d3.axisBottom(xscale))
+
+                barSvg
+                    .append('g')
+                    .attr('transform', `translate(${margin}, 0)`)
+                    .call(d3.axisLeft(yscale))
+
+                const barGroup = barSvg.append('g')
+                // Make the bars
+                barGroup 
+                    .selectAll('rect')
+                    .data(typeData)
+                    .enter()
+                    .append('rect')
+                    .attr('class', 'bar')
+                    .attr('x', (d, i) => xscale(d.type))
+                    .attr('y', d => yscale(d.amount))
+                    .attr('width', xscale.bandwidth())
+                    .attr('height', d => {
+                        console.log(d)
+                        console.log(d.amount)
+                        console.log(yscale(d.amount))
+                        return height - yscale(d.amount)
+                    })
+                    .attr('fill', (d) => getColor(d.type))
+
+                d3.select("#svg")
+                    .selectAll("circle")
+                    .data(typeData)
+                    .enter()
+                    .append("circle")
+                    .attr('cx', (d, i) => ((i + 1) * Math.random() * 1000) % 500)
+                    .attr('cy', (d, i) => ((i + 1) * Math.random() * 1000) % 500)
+                    .attr('r', d => d.amount)
+                    .attr('fill', d => getColor(d.type))
+                    .attr('opacity', () => 0.5)
+            })
+
+    </script>
+</body>
+</html>
